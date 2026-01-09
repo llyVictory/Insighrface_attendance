@@ -1,0 +1,21 @@
+<view class="container">
+  <view class="header">人脸核身 Demo (Backend Service)</view>
+  
+  <view class="register-section">
+    <view class="input-group">
+      <text>User ID:</text>
+      <input class="input-id" placeholder="输入 ID (e.g. 1001)" bindinput="handleInputId" />
+    </view>
+    <button type="default" bindtap="handleRegister">注册人脸 (Register)</button>
+  </view>
+
+  <view class="divider"></view>
+
+  <view class="verify-section">
+    <button type="primary" bindtap="handleVerify">开始人脸识别 (模拟 verify)</button>
+  </view>
+    
+  <view class="result-area">
+    <text class="result-text">{{result}}</text>
+  </view>
+</view>
