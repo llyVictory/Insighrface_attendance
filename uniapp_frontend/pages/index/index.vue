@@ -377,12 +377,11 @@
 		color: #333;
 		font-family: monospace;
 		text-align: right;
-		/* 处理长文本 */
-		white-space: nowrap;
-		overflow: hidden;
-		text-overflow: ellipsis;
-		max-width: 70%; /* 限制最大宽度 */
-		font-size: 24rpx; /* 调小字体 */
+		/* 允许换行 */
+		white-space: normal;
+		word-break: break-all;
+		flex: 1;
+		margin-left: 20rpx;
 	}
 
 	.value.highlight {
