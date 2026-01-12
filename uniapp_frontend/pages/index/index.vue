@@ -370,11 +370,19 @@
 
 	.label {
 		color: #666;
+		flex-shrink: 0; /* 防止标签换行 */
 	}
 
 	.value {
 		color: #333;
 		font-family: monospace;
+		text-align: right;
+		/* 处理长文本 */
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		max-width: 70%; /* 限制最大宽度 */
+		font-size: 24rpx; /* 调小字体 */
 	}
 
 	.value.highlight {
