@@ -50,7 +50,7 @@
 
 <script>
 	// 引入SDK核心类
-	import QQMapWX from '@/static/js/qqmap-wx-jssdk.min.js';
+	import QQMapWX from '@/common/js/qqmap-wx-jssdk.min.js';
 
 	export default {
 		data() {
