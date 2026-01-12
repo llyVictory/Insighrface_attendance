@@ -49,12 +49,16 @@
 </template>
 
 <script>
+	// 引入SDK核心类
+	var QQMapWX = require('../../static/js/qqmap-wx-jssdk.min.js');
+
 	export default {
 		data() {
 			return {
 				// 替换为您的 WSL 真实 IP
 				baseUrl: 'http://172.26.70.234:8000', 
-				mapKey: 'TY5BZ-LBNCH-2OLDM-W2KXB-RLO6Z-3OFPX', // 请替换为完整的腾讯地图Key
+				mapKey: 'TY5BZ-LBNCH-2OLDM-W2KXB-RLO6Z-3OFPX',
+				qqmapsdk: null,
 				currentAddress: '',
 				verifyResult: {
 					show: false,
@@ -65,6 +69,12 @@
 					address: ''
 				}
 			}
+		},
+		onLoad() {
+			// 实例化API核心类
+			this.qqmapsdk = new QQMapWX({
+				key: this.mapKey
+			});
 		},
 		methods: {
 			startVerify() {
@@ -129,24 +139,23 @@
 
 			resolveAddress(lat, lng) {
 				return new Promise((resolve) => {
-					// 调用腾讯地图WebService API
-					uni.request({
-						url: 'https://apis.map.qq.com/ws/geocoder/v1/',
-						data: {
-							location: `${lat},${lng}`,
-							key: this.mapKey
+					this.qqmapsdk.reverseGeocoder({
+						location: {
+							latitude: lat,
+							longitude: lng
 						},
+						sig: this.mapKey, // JSSDK 验证需要
 						success: (res) => {
-							if (res.data.status === 0) {
-								resolve(res.data.result.address || '未知详细地址');
-							} else {
-								console.error('Geocoder fail:', res.data);
-								resolve(`位置解析失败(${res.data.status})`);
-							}
+							console.log('SDK Success:', res);
+							const addr = res.result.address_component.province +
+										 res.result.address_component.city +
+										 res.result.address_component.district +
+										 (res.result.formatted_addresses ? res.result.formatted_addresses.recommend : res.result.address);
+							resolve(addr);
 						},
-						fail: (err) => {
-							console.error('Network fail:', err);
-							resolve('网络不可用，无法解析地址');
+						fail: (res) => {
+							console.error('SDK Fail:', res);
+							resolve(`位置解析失败(${res.message})`);
 						}
 					});
 				});
