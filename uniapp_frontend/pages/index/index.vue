@@ -50,13 +50,16 @@
 
 <script>
 	// 引入SDK核心类
-	var QQMapWX = require('../../static/js/qqmap-wx-jssdk.min.js');
+	import QQMapWX from '@/static/js/qqmap-wx-jssdk.min.js';
 
 	export default {
 		data() {
 			return {
-				// 替换为您的 WSL 真实 IP
+				// 本地测试  wsl ip
 				baseUrl: 'http://172.26.70.234:8000', 
+				
+				// 真机测试,wsl要链接电脑wifi。然后找到ipv4.并且打开转发： netsh interface portproxy add v4tov4 listenport=8000 listenaddress=0.0.0.0 connectport=8000 connectaddress=172.26.70.234
+				// baseUrl: 'http://192.168.137.1:8000', 
 				mapKey: 'TY5BZ-LBNCH-2OLDM-W2KXB-RLO6Z-3OFPX',
 				qqmapsdk: null,
 				currentAddress: '',
