@@ -8,6 +8,7 @@ import cv2
 import numpy as np
 from face_service import FaceService
 from vector_db import VectorDB
+from attendance_logger import log_attendance
 
 app = FastAPI(title="Face Recognition Service")
 
@@ -74,6 +75,7 @@ def read_root():
 @app.post("/api/face/verify")
 async def verify_face(
     token: str = Form(...),
+    address: str = Form("未知位置"), # Default if not provided
     file: UploadFile = File(...)
 ):
     """
@@ -104,12 +106,20 @@ async def verify_face(
         # Threshold logic
         threshold = 0.5 # Adjustable
         is_match = score > threshold
+        
+        final_user_id = user_id if is_match else "Unknown"
+        status = "Success" if is_match else "Fail"
+        
+        # Log to CSV
+        log_attendance(final_user_id, status, address)
+
         return {
             "code": 200,
             "isMatch": bool(is_match),
             "userId": user_id if is_match else None,
             "score": float(score),
-            "msg": "Success" if is_match else "未录入或未匹配到"
+            "msg": "Success" if is_match else "未录入或未匹配到",
+            "address": address
         }
 
     except Exception as e:

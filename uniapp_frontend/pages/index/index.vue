@@ -29,9 +29,14 @@
 					<text class="label">当前时间：</text>
 					<text class="value">{{ verifyResult.time }}</text>
 				</view>
+
 				<view class="info-row" v-if="verifyResult.userId">
 					<text class="label">学生姓名：</text>
 					<text class="value highlight">{{ verifyResult.userId }}</text>
+				</view>
+				<view class="info-row" v-if="verifyResult.address">
+					<text class="label">考勤位置：</text>
+					<text class="value">{{ verifyResult.address }}</text>
 				</view>
 				<view class="info-row" v-if="!verifyResult.success">
 					<text class="label">失败原因：</text>
@@ -40,6 +45,7 @@
 			</view>
 		</view>
 	</view>
+
 </template>
 
 <script>
@@ -48,18 +54,40 @@
 			return {
 				// 替换为您的 WSL 真实 IP
 				baseUrl: 'http://172.26.70.234:8000', 
+				mapKey: 'TY5BZ-LBNCH-2OLDM-W2KXB-RLO6Z-3OFPX', // 请替换为完整的腾讯地图Key
+				currentAddress: '',
 				verifyResult: {
 					show: false,
 					success: false,
 					time: '',
 					userId: '',
-					msg: ''
+					msg: '',
+					address: ''
 				}
 			}
 		},
 		methods: {
 			startVerify() {
-				// 1. 调起摄像头
+				console.log('Starting verification...');
+				// 1. 先尝试获取位置
+				this.getLocation().then(() => {
+					this.openCamera();
+				}).catch(() => {
+					uni.showModal({
+						title: '提示',
+						content: '获取位置失败，是否继续考勤？(将记录为未知位置)',
+						success: (res) => {
+							if (res.confirm) {
+								this.currentAddress = '未知位置(获取失败)';
+								this.openCamera();
+							}
+						}
+					});
+				});
+			},
+
+			openCamera() {
+				// 2. 调起摄像头
 				uni.chooseMedia({
 					count: 1,
 					mediaType: ['image'],
@@ -75,6 +103,55 @@
 				});
 			},
 
+			getLocation() {
+				return new Promise((resolve, reject) => {
+					uni.showLoading({ title: '定位中...' });
+					uni.getLocation({
+						type: 'gcj02',
+						isHighAccuracy: true,
+						success: (res) => {
+							console.log('Location success:', res);
+							this.resolveAddress(res.latitude, res.longitude).then(addr => {
+								this.currentAddress = addr;
+								uni.hideLoading();
+								resolve();
+							});
+						},
+						fail: (err) => {
+							console.error('Location fail:', err);
+							uni.hideLoading();
+							// 如果是模拟器，可能需要配置模拟位置
+							reject(err);
+						}
+					});
+				});
+			},
+
+			resolveAddress(lat, lng) {
+				return new Promise((resolve) => {
+					// 调用腾讯地图WebService API
+					uni.request({
+						url: 'https://apis.map.qq.com/ws/geocoder/v1/',
+						data: {
+							location: `${lat},${lng}`,
+							key: this.mapKey
+						},
+						success: (res) => {
+							if (res.data.status === 0) {
+								resolve(res.data.result.address || '未知详细地址');
+							} else {
+								console.error('Geocoder fail:', res.data);
+								resolve(`位置解析失败(${res.data.status})`);
+							}
+						},
+						fail: (err) => {
+							console.error('Network fail:', err);
+							resolve('网络不可用，无法解析地址');
+						}
+					});
+				});
+			},
+
 			uploadImage(filePath) {
 				uni.showLoading({ title: '身份核验中...' });
 				
@@ -84,7 +161,8 @@
 					filePath: filePath,
 					name: 'file',
 					formData: {
-						'token': 'UNIAPP_TOKEN_' + Date.now()
+						'token': 'UNIAPP_TOKEN_' + Date.now(),
+						'address': this.currentAddress // 发送地址
 					},
 					success: (uploadRes) => {
 						uni.hideLoading();
@@ -95,10 +173,13 @@
 
 						try {
 							const result = JSON.parse(uploadRes.data);
+							// Backend returns 'address' field now too, but we can use local
+							const addr = result.address || this.currentAddress; 
+							
 							if (result.code === 200 && result.isMatch) {
-								this.showResult(true, result.userId, 'Success');
+								this.showResult(true, result.userId, 'Success', addr);
 							} else {
-								this.showResult(false, result.userId, result.msg || '未录入或未匹配到');
+								this.showResult(false, result.userId, result.msg || '未录入或未匹配到', addr);
 							}
 						} catch (e) {
 							this.showResult(false, null, 'JSON Parse Error');
@@ -111,14 +192,15 @@
 				});
 			},
 
-			showResult(success, userId, msg) {
+			showResult(success, userId, msg, address) {
 				const now = new Date();
 				this.verifyResult = {
 					show: true,
 					success: success,
 					time: this.formatDate(now),
 					userId: userId || '未知',
-					msg: msg
+					msg: msg,
+					address: address || '未知'
 				};
 
 				if (success) {

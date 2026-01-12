@@ -1,15 +1,23 @@
 {
-    "name" : "FaceAttendance",
-    "appid" : "__UNI__EB031DA",
-    "description" : "",
-    "versionName" : "1.0.0",
-    "versionCode" : "100",
-    "transformPx" : false,
-    "mp-weixin" : {
-        "appid" : "",
-        "setting" : {
-            "urlCheck" : false
+    "name": "FaceAttendance",
+    "appid": "__UNI__EB031DA",
+    "description": "",
+    "versionName": "1.0.0",
+    "versionCode": "100",
+    "transformPx": false,
+    "mp-weixin": {
+        "appid": "",
+        "setting": {
+            "urlCheck": false
         },
-        "usingComponents" : true
+        "usingComponents": true,
+        "permission": {
+            "scope.userLocation": {
+                "desc": "您的位置信息将用于考勤打卡记录"
+            }
+        },
+        "requiredPrivateInfos": [
+            "getLocation"
+        ]
     }
 }
